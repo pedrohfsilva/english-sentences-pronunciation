@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# English Sentences Study App
 
-## Getting Started
+## Objective
+This project is a web application designed to help users practice and improve their English pronunciation and memorization of sentences. It utilizes a flashcard system combined with speech recognition technology to verify pronunciation accuracy.
 
-First, run the development server:
+## Features
+- **Study Mode**: Learn new sentences with their translations.
+- **Review System**: A spaced repetition system with multiple levels to reinforce learning.
+- **Speech Recognition**: Uses the Web Speech API to listen to the user's pronunciation and provide feedback.
+- **Progress Tracking**: Dashboard to view study statistics and progress across different levels.
+- **Auto-save**: Automatically tracks progress and promotes sentences to higher review levels upon successful recitation.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Technologies Used
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Icons**: Lucide React
+- **Speech**: Web Speech API (Native Browser Support)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Prerequisites
+- Node.js (v18 or higher recommended)
+- npm (Node Package Manager)
+- A modern web browser with Web Speech API support (Chrome, Edge, Safari).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Installation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Navigate to the project directory:
+   ```bash
+   cd english_phrases
+   ```
 
-## Learn More
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+## Running the Application
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. Open your browser and visit:
+   ```
+   http://localhost:3000
+   ```
 
-## Deploy on Vercel
+## Project Structure
+- `app/`: Contains the application routes and pages (Dashboard, Study, Review).
+- `components/`: Reusable UI components like FlashCard.
+- `data/`: Contains the source data for sentences (`sentences.json`).
+- `hooks/`: Custom React hooks, including `useSpeechRecognition`.
+- `lib/`: Utility functions and local storage management.
+- `types/`: TypeScript type definitions.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Usage
+1. **Dashboard**: View your current progress and select a mode.
+2. **Study**: Click "Start Studying" to practice new sentences. Read the sentence aloud. If correct, it moves to the review queue.
+3. **Review**: Select a specific level to review sentences you have already learned.
+4. **Microphone**: Ensure your browser has permission to access the microphone.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+*Note: This application relies on the browser's native speech recognition capabilities. Performance may vary depending on the browser and environment.*
+# english-sentences-pronunciation
