@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "sentence": "I am studying computer science to become a software engineer.",
+    "translation": "Eu estou estudando ciência da computação para me tornar um engenheiro de software."
+  },
+  {
+    "id": 2,
+    "sentence": "Technology is changing the way people communicate around the world.",
+    "translation": "A tecnologia está mudando a forma como as pessoas se comunicam ao redor do mundo."
+  },
+  {
+    "id": 3,
+    "sentence": "I practice English every day to improve my pronunciation.",
+    "translation": "Eu pratico inglês todos os dias para melhorar minha pronúncia."
+  },
+  {
+    "id": 4,
+    "sentence": "Working on real projects helps me learn faster.",
+    "translation": "Trabalhar em projetos reais me ajuda a aprender mais rápido."
+  },
+  {
+    "id": 5,
+    "sentence": "The interview was challenging, but I felt confident.",
+    "translation": "A entrevista foi desafiadora, mas eu me senti confiante."
+  },
+  {
+    "id": 6,
+    "sentence": "I enjoy solving problems using logic and creativity.",
+    "translation": "Eu gosto de resolver problemas usando lógica e criatividade."
+  },
+  {
+    "id": 7,
+    "sentence": "Good communication skills are important for teamwork.",
+    "translation": "Boas habilidades de comunicação são importantes para o trabalho em equipe."
+  },
+  {
+    "id": 8,
+    "sentence": "Learning new technologies requires patience and practice.",
+    "translation": "Aprender novas tecnologias exige paciência e prática."
+  },
+  {
+    "id": 9,
+    "sentence": "I am preparing for an internship at a technology company.",
+    "translation": "Eu estou me preparando para um estágio em uma empresa de tecnologia."
+  },
+  {
+    "id": 10,
+    "sentence": "Making mistakes is part of the learning process.",
+    "translation": "Cometer erros faz parte do processo de aprendizagem."
+  }
+]
