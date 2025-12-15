@@ -2,7 +2,7 @@
 import { useState, useEffect, use } from 'react';
 import { Sentence } from '@/types';
 import FlashCard from '@/components/FlashCard';
-import { saveForReview, getReviewSentences, getSentenceLevel, setSentenceLevel, markLevelProgress, getLevelProgress } from '@/lib/storage';
+import { saveForReview, getReviewSentences, getSentenceLevel, setSentenceLevel, markLevelProgress, getLevelProgress, getAppState, saveAppState, getLevelTotal, setLevelTotal } from '@/lib/storage';
 import Link from 'next/link';
 import { Layers, CheckCircle, Home } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -19,50 +19,74 @@ export default function ReviewPage({ params }: { params: Promise<{ level: string
   const [totalReviewCount, setTotalReviewCount] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
   const [displayTotal, setDisplayTotal] = useState(0);
-  const [liveReviewedCount, setLiveReviewedCount] = useState(() => getLevelProgress(level).length);
+  const [liveReviewedCount, setLiveReviewedCount] = useState(0);
   const [sessionReviewIds, setSessionReviewIds] = useState<number[]>([]);
   const [sessionStartIndex, setSessionStartIndex] = useState<number | null>(null);
+  const [stableTotal, setStableTotal] = useState<number | null>(null);
+  const [initialProgressCount, setInitialProgressCount] = useState(0);
   const router = useRouter();
 
-  const refreshReviewSentences = async () => {
+  const refreshReviewSentences = async (existingSessionIds?: number[]) => {
     const allSentencesRes = await fetch('/api/sentences');
     const allSentences: Sentence[] = await allSentencesRes.json();
 
-    const baseIds = sessionReviewIds.length > 0 ? sessionReviewIds : getReviewSentences(level);
-    const uniqueIds = Array.from(new Set(baseIds));
+    // Pegar progresso atual do localStorage (fonte de verdade)
+    const progressedIds = new Set(getLevelProgress(level));
 
-    if (sessionReviewIds.length === 0) {
-      setSessionReviewIds(uniqueIds);
-      setSessionStartIndex(uniqueIds.length > 0 ? Math.floor(Math.random() * uniqueIds.length) : 0);
-    }
-
-    const completedIds = getLevelProgress(level);
-    const total = uniqueIds.length;
-    setTotalReviewCount(total);
-    setDisplayTotal(total);
-    setCompletedCount(completedIds.length);
-    setLiveReviewedCount(completedIds.length);
-
-    if (total === 0) {
-      setSentences([]);
+    // Se temos IDs de sessão existentes, usar eles para evitar repetição
+    if (existingSessionIds && existingSessionIds.length > 0) {
+      const available = existingSessionIds
+        .filter(id => !progressedIds.has(id))
+        .map(id => allSentences.find(s => s.id === id))
+        .filter((s): s is Sentence => !!s);
+      setSentences(available);
       setLoading(false);
-      return { pending: [], completedIds, total };
+      return;
     }
 
-    const start = sessionStartIndex !== null ? sessionStartIndex : 0;
+    // Primeira carga: pegar IDs da fila de revisão e criar snapshot da sessão
+    const reviewIds = getReviewSentences(level);
+    const uniqueIds = Array.from(new Set(reviewIds));
+
+    // Criar snapshot da sessão com ordem circular aleatória
+    const start = uniqueIds.length > 0 ? Math.floor(Math.random() * uniqueIds.length) : 0;
     const orderedIds: number[] = [];
+    const seen = new Set<number>();
     for (let i = 0; i < uniqueIds.length; i++) {
       const idx = (start + i) % uniqueIds.length;
-      orderedIds.push(uniqueIds[idx]);
+      const id = uniqueIds[idx];
+      if (seen.has(id)) continue;
+      seen.add(id);
+      orderedIds.push(id);
+    }
+
+    setSessionReviewIds(orderedIds);
+    setSessionStartIndex(start);
+    const snap = Math.max(getLevelTotal(level), uniqueIds.length);
+    setLevelTotal(level, snap);
+    setStableTotal(snap);
+    setDisplayTotal(snap);
+    setTotalReviewCount(snap);
+    
+    // Salvar contagem inicial do progresso
+    const initialCount = progressedIds.size;
+    setInitialProgressCount(initialCount);
+    setCompletedCount(0);
+    setLiveReviewedCount(initialCount);
+
+    if (snap === 0) {
+      setSentences([]);
+      setLoading(false);
+      return;
     }
 
     const pendingSentences = orderedIds
+      .filter(id => !progressedIds.has(id))
       .map(id => allSentences.find(s => s.id === id))
-      .filter((s): s is Sentence => !!s && !completedIds.includes(s.id));
+      .filter((s): s is Sentence => !!s);
 
     setSentences(pendingSentences);
     setLoading(false);
-    return { pending: pendingSentences, completedIds, total };
   };
 
   // Prevent stale index from pointing past the available sentences list
@@ -76,6 +100,8 @@ export default function ReviewPage({ params }: { params: Promise<{ level: string
     // Reset session state on level change
     setSessionReviewIds([]);
     setSessionStartIndex(null);
+    setStableTotal(null);
+    setInitialProgressCount(0);
     setIsFinished(false);
     setCurrentIndex(0);
     setLoading(true);
@@ -92,27 +118,39 @@ export default function ReviewPage({ params }: { params: Promise<{ level: string
   }, [currentIndex, sentences, level]);
 
   const handleNext = () => {
-    if (sentences[currentIndex]) {
-        markLevelProgress(level, sentences[currentIndex].id);
-      setCompletedCount((prev) => prev + 1);
-      setLiveReviewedCount(getLevelProgress(level).length);
-    }
-    const atEnd = currentIndex >= sentences.length - 1;
-    if (atEnd) {
-      const refreshed = getLevelProgress(level).length;
-      const total = displayTotal; // keep session total stable
-      setLiveReviewedCount(refreshed);
-      if (refreshed >= total) {
+    if (!sentences[currentIndex]) return;
+    
+    const currentSentence = sentences[currentIndex];
+    markLevelProgress(level, currentSentence.id);
+    
+    // Atualizar contagem
+    const currentProgress = getLevelProgress(level).length;
+    const sessionCompleted = currentProgress - initialProgressCount;
+    setCompletedCount(sessionCompleted);
+    setLiveReviewedCount(currentProgress);
+    
+    const total = stableTotal !== null ? stableTotal : displayTotal;
+    
+    // Remover a frase atual da lista (approach de pilha)
+    const remainingSentences = sentences.filter((_, idx) => idx !== currentIndex);
+    
+    if (remainingSentences.length === 0) {
+      // Não tem mais frases na lista
+      if (sessionCompleted >= total) {
         setIsFinished(true);
       } else {
-        // Reload pending from session snapshot to continue until totals match
-        refreshReviewSentences().then(() => {
+        // Recarregar frases pendentes
+        refreshReviewSentences(sessionReviewIds).then(() => {
           setCurrentIndex(0);
-          setIsFinished(false);
         });
       }
     } else {
-      setCurrentIndex((prev) => prev + 1);
+      setSentences(remainingSentences);
+      // Manter currentIndex no mesmo posição (próxima frase "cai" para essa posição)
+      // Se estava no final, voltar para 0
+      if (currentIndex >= remainingSentences.length) {
+        setCurrentIndex(0);
+      }
     }
   };
 

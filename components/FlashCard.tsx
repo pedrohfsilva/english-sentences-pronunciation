@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sentence } from '@/types';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { Eye, EyeOff, Save, Mic, MicOff, Volume2, ArrowLeft } from 'lucide-react';
@@ -46,9 +46,15 @@ export default function FlashCard({
 
   const [hasAutoSaved, setHasAutoSaved] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
+  const sentenceIdRef = useRef(sentence.id);
+
+  // Update ref synchronously when sentence changes
+  sentenceIdRef.current = sentence.id;
 
   const handleMatch = () => {
+    // Guard against firing for wrong sentence or already exiting
     if (isExiting) return;
+    if (sentence.id !== sentenceIdRef.current) return;
     
     setIsExiting(true);
     
@@ -168,7 +174,7 @@ export default function FlashCard({
               <span 
                 key={idx}
                 onClick={() => handleWordClick(word)}
-                className="text-3xl md:text-5xl font-bold text-slate-800 leading-tight cursor-pointer hover:text-blue-600 transition-colors"
+                className="text-3xl md:text-5xl font-bold text-slate-800 leading-tight cursor-pointer hover:text-blue-500 transition-colors"
                 title="Click to listen"
               >
                 {word}
@@ -177,15 +183,15 @@ export default function FlashCard({
           </div>
           
           {/* Feedback Display */}
-          <div className="min-h-[3rem] flex flex-wrap justify-center gap-2 text-lg md:text-xl">
+          <div className="flex flex-wrap justify-center gap-2 text-lg md:text-xl">
             {feedback.length > 0 ? (
               feedback.map((seg, i) => (
                 <span
                   key={i}
-                  className={`px-1 rounded ${
+                  className={`p-1 rounded ${
                     seg.isCorrect 
                       ? 'text-green-600 bg-green-50/50 font-medium' 
-                      : 'text-red-500 bg-red-50/50 decoration-red-300 underline decoration-wavy'
+                      : 'text-red-500 bg-red-50/50'
                   }`}
                 >
                   {seg.text}

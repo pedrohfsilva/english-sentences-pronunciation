@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "sentence": "I am studying computer science to become a software engineer.",
+    "translation": "Eu estou estudando ciência da computação para me tornar um engenheiro de software."
+  },
+  {
+    "id": 2,
+    "sentence": "Technology is changing the way people communicate around the world.",
+    "translation": "A tecnologia está mudando a forma como as pessoas se comunicam ao redor do mundo."
+  },
+  {
+    "id": 3,
+    "sentence": "I practice English every day to improve my pronunciation.",
+    "translation": "Eu pratico inglês todos os dias para melhorar minha pronúncia."
+  },
+  {
+    "id": 4,
+    "sentence": "Working on real projects helps me learn faster.",
+    "translation": "Trabalhar em projetos reais me ajuda a aprender mais rápido."
+  },
+  {
+    "id": 5,
+    "sentence": "The interview was challenging, but I felt confident.",
+    "translation": "A entrevista foi desafiadora, mas eu me senti confiante."
+  }
+]

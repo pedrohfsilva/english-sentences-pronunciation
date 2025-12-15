@@ -17,26 +17,45 @@ export default function StudyPage() {
   const [totalSentencesCount, setTotalSentencesCount] = useState(0);
   const [initialStudiedCount, setInitialStudiedCount] = useState(0);
   const [liveStudiedCount, setLiveStudiedCount] = useState(() => getAppState().studiedCount);
+  const [sessionSentenceIds, setSessionSentenceIds] = useState<number[]>([]);
   const router = useRouter();
 
-  const refreshPendingSentences = (allSentences: Sentence[], studiedSet: Set<number>) => {
-    // Build a circular list starting at random index, skipping studied sentences
+  const refreshPendingSentences = (allSentences: Sentence[], studiedSet: Set<number>, existingSessionIds?: number[]) => {
     if (allSentences.length === 0) {
       setSentences([]);
       setLoading(false);
       return;
     }
 
+    // If we already have session IDs, use those in order (skip completed)
+    if (existingSessionIds && existingSessionIds.length > 0) {
+      const available = existingSessionIds
+        .filter(id => !studiedSet.has(id))
+        .map(id => allSentences.find(s => s.id === id))
+        .filter((s): s is Sentence => !!s);
+      setSentences(available);
+      setLoading(false);
+      return;
+    }
+
+    // First load: build a circular list starting at random index
     const start = Math.floor(Math.random() * allSentences.length);
     const available: Sentence[] = [];
+    const orderedIds: number[] = [];
+    const seen = new Set<number>();
     for (let i = 0; i < allSentences.length; i++) {
       const idx = (start + i) % allSentences.length;
       const s = allSentences[idx];
+      if (!s) continue;
+      if (seen.has(s.id)) continue;
+      seen.add(s.id);
+      orderedIds.push(s.id);
       if (!studiedSet.has(s.id)) {
         available.push(s);
       }
     }
 
+    setSessionSentenceIds(orderedIds);
     setSentences(available);
     setLoading(false);
   };
@@ -73,33 +92,47 @@ export default function StudyPage() {
   }, [currentIndex, sentences]);
 
   const handleNext = () => {
-    if (sentences[currentIndex]) {
-        markAsStudied(sentences[currentIndex].id);
-        const latest = getAppState();
-        const newTotal = latest.studiedSentences.length;
-        setLiveStudiedCount(newTotal);
-        if (newTotal >= totalSentencesCount) {
-          setAllStudied(true);
-        }
+    if (!sentences[currentIndex]) return;
+    
+    const currentSentence = sentences[currentIndex];
+    markAsStudied(currentSentence.id);
+    
+    // Atualizar contagem
+    const latest = getAppState();
+    const newTotal = latest.studiedSentences.length;
+    setLiveStudiedCount(newTotal);
+    
+    if (newTotal >= totalSentencesCount) {
+      setAllStudied(true);
+      setIsFinished(true);
+      return;
     }
-    const atEnd = currentIndex >= sentences.length - 1;
-    if (atEnd) {
-      const latest = getAppState();
-      const studiedSet = new Set<number>(latest.studiedSentences);
+    
+    // Remover a frase atual da lista (approach de pilha)
+    const remainingSentences = sentences.filter((_, idx) => idx !== currentIndex);
+    
+    if (remainingSentences.length === 0) {
+      // Não tem mais frases, verificar se terminou tudo
+      const studiedSet = new Set<number>(getAppState().studiedSentences);
       if (studiedSet.size >= totalSentencesCount) {
         setIsFinished(true);
       } else {
-        // Reload remaining pending sentences to avoid premature completion
+        // Recarregar frases pendentes
         fetch('/api/sentences')
           .then(res => res.json())
           .then((data: Sentence[]) => {
-            refreshPendingSentences(data, studiedSet);
+            const currentStudied = new Set<number>(getAppState().studiedSentences);
+            refreshPendingSentences(data, currentStudied, sessionSentenceIds);
             setCurrentIndex(0);
-            setIsFinished(false);
           });
       }
     } else {
-      setCurrentIndex((prev) => prev + 1);
+      setSentences(remainingSentences);
+      // Manter currentIndex no mesmo posição (próxima frase "cai" para essa posição)
+      // Se estava no final, voltar para 0
+      if (currentIndex >= remainingSentences.length) {
+        setCurrentIndex(0);
+      }
     }
   };
 

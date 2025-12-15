@@ -9,7 +9,8 @@ export default function Home() {
     studiedCount: 0, 
     totalInReview: 0, 
     reviewCounts: {} as Record<number, number>,
-    levelProgressCounts: {} as Record<number, number>
+    levelProgressCounts: {} as Record<number, number>,
+    levelTotals: {} as Record<number, number>
   });
   const [levels, setLevels] = useState<number[]>([]);
   const [totalSentences, setTotalSentences] = useState(0);
@@ -21,7 +22,8 @@ export default function Home() {
       studiedCount: state.studiedCount,
       totalInReview: state.totalInReview,
       reviewCounts: state.reviewCounts,
-      levelProgressCounts: state.levelProgressCounts
+      levelProgressCounts: state.levelProgressCounts,
+      levelTotals: state.levelTotals
     });
     setLevels(getAvailableLevels());
   };
@@ -40,7 +42,6 @@ export default function Home() {
     setShowResetModal(false);
   };
 
-  const progressPercentage = totalSentences > 0 ? Math.min(100, (stats.studiedCount / totalSentences) * 100) : 0;
   const isStudyFinished = totalSentences > 0 && stats.studiedCount >= totalSentences;
 
   return (
@@ -87,41 +88,15 @@ export default function Home() {
       )}
 
       {/* Hero Section */}
-      <div className="bg-white border-b border-slate-200 pb-8 pt-12 px-6">
+      <div className="pt-12 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-4xl font-bold text-slate-900 mb-2 tracking-tight">
             English <span className="text-blue-600">Mastery</span>
           </h1>
-          <p className="text-slate-500">Track your journey to fluency</p>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-6 py-8 space-y-8">
-        
-        {/* Progress Bar Section */}
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative">
-            <div className="flex justify-between items-center mb-4">
-                <div>
-                    <p className="text-md font-medium text-slate-500 tracking-wider">Progress</p>
-                    <p className="text-3xl font-bold text-slate-800 mt-1">{stats.studiedCount} <span className="text-lg text-slate-400 font-normal">/ {totalSentences}</span></p>
-                </div>
-                
-                {/* Reset Button Positioned Here */}
-                <button 
-                    onClick={() => setShowResetModal(true)}
-                    className="absolute top-6 right-6 p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                    title="Reset Progress"
-                >
-                    <Trash2 size={18} />
-                </button>
-            </div>
-            <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
-                <div 
-                    className="bg-blue-600 h-full rounded-full"
-                    style={{ width: `${progressPercentage}%` }}
-                ></div>
-            </div>
-        </div>
+        <div className="max-w-3xl mx-auto px-6 py-8 space-y-8">
 
         {/* Study New Phrases */}
         <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm relative overflow-hidden">
@@ -135,11 +110,18 @@ export default function Home() {
                         <p className="text-slate-500 text-sm">Learn new vocabulary</p>
                     </div>
                 </div>
-                <div className="text-right">
-                    <span className={`text-lg font-bold ${isStudyFinished ? 'text-green-500' : 'text-slate-700'}`}>
-                        {stats.studiedCount} / {totalSentences}
-                    </span>
-                </div>
+            <div className="flex items-center gap-3 text-right">
+              <span className={`text-lg font-bold ${isStudyFinished ? 'text-green-500' : 'text-slate-700'}`}>
+                {stats.studiedCount} / {totalSentences}
+              </span>
+              <button 
+                onClick={() => setShowResetModal(true)}
+                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                title="Reset Progress"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
             </div>
             
             {isStudyFinished ? (
@@ -174,7 +156,8 @@ export default function Home() {
                 {levels.map((level) => {
                   const totalCountRaw = stats.reviewCounts[level] || 0;
                   const reviewedCount = stats.levelProgressCounts[level] || 0;
-                  const totalCount = Math.max(totalCountRaw, reviewedCount); // keep completed level visible even if queue emptied
+                  const snapshotTotal = stats.levelTotals[level] || 0;
+                  const totalCount = Math.max(totalCountRaw, reviewedCount, snapshotTotal); // keep completed level visible even if queue emptied
                     
                     // Check if previous level is completed
                     // Level 1 is always unlocked.

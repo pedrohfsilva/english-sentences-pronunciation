@@ -18,24 +18,40 @@ export function useSpeechRecognition(
   const [mistakeCount, setMistakeCount] = useState(0);
   const recognitionRef = useRef<any>(null);
   const onMatchRef = useRef(onMatch);
+  const targetSentenceRef = useRef(targetSentence);
 
-  // Update ref when callback changes
+  // Update refs when values change
   useEffect(() => {
     onMatchRef.current = onMatch;
   }, [onMatch]);
+
+  useEffect(() => {
+    targetSentenceRef.current = targetSentence;
+  }, [targetSentence]);
 
   // Normalize text for comparison
   const normalize = (text: string) => {
     return text
       .toLowerCase()
-      .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')
+      // Remove TODOS os sinais de pontuação e caracteres especiais
+      .replace(/[^\w\s]|_/g, '')
       .replace(/\s{2,}/g, ' ')
       .trim();
   };
 
-  const checkMatch = useCallback((currentTranscript: string, isFinal: boolean) => {
-    const normalizedTarget = normalize(targetSentence);
+  const checkMatch = useCallback((currentTranscript: string, isFinal: boolean, currentTarget: string) => {
+    // Guard against stale callback from old recognition session
+    if (currentTarget !== targetSentenceRef.current) {
+      return;
+    }
+
+    const normalizedTarget = normalize(currentTarget);
     const normalizedTranscript = normalize(currentTranscript);
+
+    // Ignore empty or very short transcripts
+    if (normalizedTranscript.length < 2) {
+      return;
+    }
 
     const targetWords = normalizedTarget.split(' ');
     const transcriptWords = normalizedTranscript.split(' ');
@@ -59,7 +75,7 @@ export function useSpeechRecognition(
         // If it's a final result and it didn't match, count as mistake
         setMistakeCount(prev => prev + 1);
     }
-  }, [targetSentence]); // Removed onMatch from dependencies
+  }, []); // No dependencies needed - uses parameters
 
   const toggleMicrophone = useCallback(() => {
     setIsActive(prev => !prev);
@@ -113,7 +129,7 @@ export function useSpeechRecognition(
           }
           
           setTranscript(interimTranscript);
-          checkMatch(interimTranscript, isFinal);
+          checkMatch(interimTranscript, isFinal, targetSentence);
         };
 
         recognitionRef.current = recognition;
@@ -140,7 +156,7 @@ export function useSpeechRecognition(
         recognitionRef.current = null;
       }
     };
-  }, [checkMatch, isActive]);
+  }, [checkMatch, isActive, targetSentence]);
 
   // Reset when target sentence changes
   useEffect(() => {

@@ -5,6 +5,7 @@ export interface AppState {
   studiedSentences: number[]; // List of IDs that have been studied
   reviewQueue: Record<number, number>; // sentenceId -> level
   levelProgress: Record<number, number[]>; // level -> list of reviewed sentenceIds in current cycle
+  levelTotals?: Record<number, number>; // level -> max observed count for that level
 }
 
 export const getAppState = (): AppState => {
@@ -12,6 +13,7 @@ export const getAppState = (): AppState => {
   const stored = localStorage.getItem(STORAGE_KEY);
   const state = stored ? JSON.parse(stored) : { studiedCount: 0, studiedSentences: [], reviewQueue: {}, levelProgress: {} };
   if (!state.levelProgress) state.levelProgress = {};
+  if (!state.levelTotals) state.levelTotals = {};
   if (!state.studiedSentences) {
     // Migration: Initialize with keys from reviewQueue
     state.studiedSentences = Object.keys(state.reviewQueue).map(Number);
@@ -99,6 +101,19 @@ export const getReviewSentences = (level: number): number[] => {
     .map(([id, _]) => Number(id));
 };
 
+export const setLevelTotal = (level: number, total: number) => {
+  const state = getAppState();
+  const current = state.levelTotals?.[level] || 0;
+  if (!state.levelTotals) state.levelTotals = {};
+  state.levelTotals[level] = Math.max(current, total);
+  saveAppState(state);
+};
+
+export const getLevelTotal = (level: number): number => {
+  const state = getAppState();
+  return state.levelTotals?.[level] || 0;
+};
+
 export const getAvailableLevels = (): number[] => {
   const state = getAppState();
   const levels = new Set<number>();
@@ -127,6 +142,7 @@ export const getDetailedStats = () => {
     studiedCount: state.studiedCount,
     reviewCounts,
     levelProgressCounts,
+    levelTotals: state.levelTotals || {},
     totalInReview
   };
 };
