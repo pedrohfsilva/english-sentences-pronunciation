@@ -172,20 +172,20 @@ export default function ReviewPage({ params }: { params: Promise<{ level: string
   // Show completion first to avoid spinner after finishing
   if (isFinished) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-6">
-        <div className="bg-white p-8 rounded-3xl shadow-xl text-center max-w-md w-full border border-slate-100">
-          <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle size={40} />
+      <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4 md:p-6">
+        <div className="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-xl text-center max-w-md w-full border border-slate-100">
+          <div className="w-16 h-16 md:w-20 md:h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-5 md:mb-6">
+            <CheckCircle size={32} className="md:w-10 md:h-10" />
           </div>
-          <h2 className="text-3xl font-bold text-slate-800 mb-4">Session Complete!</h2>
-          <p className="text-slate-500 mb-8 text-lg">
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3 md:mb-4">Session Complete!</h2>
+          <p className="text-slate-500 mb-6 md:mb-8 text-base md:text-lg">
             You have reviewed all {displayTotal} sentences in this level.
           </p>
           <Link 
             href="/" 
-            className="flex items-center justify-center gap-2 w-full py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+            className="flex items-center justify-center gap-2 w-full py-3 md:py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 text-sm md:text-base"
           >
-            <Home size={20} />
+            <Home size={18} className="md:w-5 md:h-5" />
             Back to Dashboard
           </Link>
         </div>
@@ -200,18 +200,18 @@ export default function ReviewPage({ params }: { params: Promise<{ level: string
   );
 
   if (sentences.length === 0) return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center gap-6 p-4">
-      <div className="bg-white p-8 rounded-3xl shadow-xl text-center max-w-md w-full border border-slate-100">
-        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Layers size={32} />
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center gap-4 md:gap-6 p-3 md:p-4">
+      <div className="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-xl text-center max-w-md w-full border border-slate-100">
+        <div className="w-14 h-14 md:w-16 md:h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-5 md:mb-6">
+          <Layers size={28} className="md:w-8 md:h-8" />
         </div>
-        <h2 className="text-2xl font-bold text-slate-800 mb-2">All Caught Up!</h2>
-        <p className="text-slate-500 mb-8">
+        <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">All Caught Up!</h2>
+        <p className="text-slate-500 mb-6 md:mb-8 text-sm md:text-base">
           You have no sentences left to review at Level {level}. Great job!
         </p>
         <Link 
           href="/" 
-          className="block w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
+          className="block w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors text-sm md:text-base"
         >
           Back to Dashboard
         </Link>
@@ -253,7 +253,7 @@ export default function ReviewPage({ params }: { params: Promise<{ level: string
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <div className="flex-1 flex items-center justify-center pb-20 pt-10">
+      <div className="flex-1 flex items-center justify-center md:pb-20 md:pt-10">
         <FlashCard
           sentence={currentSentence}
           title={`Review ${level}`}
