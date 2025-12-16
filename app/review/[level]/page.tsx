@@ -135,15 +135,9 @@ export default function ReviewPage({ params }: { params: Promise<{ level: string
     const remainingSentences = sentences.filter((_, idx) => idx !== currentIndex);
     
     if (remainingSentences.length === 0) {
-      // Não tem mais frases na lista
-      if (sessionCompleted >= total) {
-        setIsFinished(true);
-      } else {
-        // Recarregar frases pendentes
-        refreshReviewSentences(sessionReviewIds).then(() => {
-          setCurrentIndex(0);
-        });
-      }
+      // Não tem mais frases na lista - sempre finalizar
+      // O total da sessão foi definido no início e não deve ser expandido
+      setIsFinished(true);
     } else {
       setSentences(remainingSentences);
       // Manter currentIndex no mesmo posição (próxima frase "cai" para essa posição)
