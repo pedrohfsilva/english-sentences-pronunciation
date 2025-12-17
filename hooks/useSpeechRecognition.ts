@@ -9,7 +9,8 @@ export interface FeedbackSegment {
 
 export function useSpeechRecognition(
   targetSentence: string,
-  onMatch: () => void
+  onMatch: () => void,
+  isSpeaking: boolean = false
 ) {
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -82,7 +83,7 @@ export function useSpeechRecognition(
   }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && isActive) {
+    if (typeof window !== 'undefined' && isActive && !isSpeaking) {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       
       if (SpeechRecognition) {
@@ -101,12 +102,12 @@ export function useSpeechRecognition(
         recognition.onstart = () => setIsListening(true);
         recognition.onend = () => {
             setIsListening(false);
-            // Auto restart to keep listening loop ONLY if still active
-            if (recognitionRef.current && isActive) {
+            // Auto restart to keep listening loop ONLY if still active and not speaking
+            if (recognitionRef.current && isActive && !isSpeaking) {
                 setTimeout(() => {
                     try {
                         // Check ref again inside timeout in case it was unmounted/disabled
-                        if (recognitionRef.current && isActive) {
+                        if (recognitionRef.current && isActive && !isSpeaking) {
                             recognition.start();
                         }
                     } catch (e) {
@@ -156,7 +157,7 @@ export function useSpeechRecognition(
         recognitionRef.current = null;
       }
     };
-  }, [checkMatch, isActive, targetSentence]);
+  }, [checkMatch, isActive, targetSentence, isSpeaking]);
 
   // Reset when target sentence changes
   useEffect(() => {
@@ -165,6 +166,15 @@ export function useSpeechRecognition(
     setMistakeCount(0);
     setIsActive(true); // Reset to active when sentence changes
   }, [targetSentence]);
+
+  // Stop recognition when speaking
+  useEffect(() => {
+    if (isSpeaking && recognitionRef.current) {
+      recognitionRef.current.onend = null; // Prevent restart
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
+  }, [isSpeaking]);
 
   return { transcript, isListening, feedback, mistakeCount, toggleMicrophone, isActive };
 }

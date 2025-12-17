@@ -136,6 +136,25 @@ export default function StudyPage() {
     }
   };
 
+  const handleSkip = () => {
+    if (!sentences[currentIndex]) return;
+    
+    // Não marca como estudado, apenas move para o próximo
+    const remainingSentences = sentences.filter((_, idx) => idx !== currentIndex);
+    
+    if (remainingSentences.length === 0) {
+      // Se não tem mais frases, voltar para dashboard
+      router.push('/');
+    } else {
+      setSentences(remainingSentences);
+      // Manter currentIndex no mesmo posição (próxima frase "cai" para essa posição)
+      // Se estava no final, voltar para 0
+      if (currentIndex >= remainingSentences.length) {
+        setCurrentIndex(0);
+      }
+    }
+  };
+
   const handleToggleSave = () => {
     if (!sentences[currentIndex]) return;
     const id = sentences[currentIndex].id;
@@ -238,6 +257,7 @@ export default function StudyPage() {
           sentence={currentSentence}
           title="New sentences"
           onNext={handleNext}
+          onSkip={handleSkip}
           onToggleSave={handleToggleSave}
           isSaved={isSaved}
           currentIndex={realIndex}

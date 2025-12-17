@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Sentence } from '@/types';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
-import { Eye, EyeOff, Save, Mic, MicOff, Volume2, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Save, Mic, MicOff, Volume2, ArrowLeft, SkipForward } from 'lucide-react';
 
 interface FlashCardProps {
   sentence: Sentence;
   title: string;
   onNext: () => void;
+  onSkip: () => void;
   onToggleSave: () => void;
   isSaved: boolean;
   currentIndex: number;
@@ -19,7 +20,8 @@ interface FlashCardProps {
 export default function FlashCard({ 
   sentence, 
   title,
-  onNext, 
+  onNext,
+  onSkip,
   onToggleSave, 
   isSaved,
   currentIndex,
@@ -38,6 +40,7 @@ export default function FlashCard({
   }
   const [showTranslation, setShowTranslation] = useState(false);
   const [wantsToSave, setWantsToSave] = useState(isSaved);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   // Sync local state with prop when prop changes (e.g. new card)
   useEffect(() => {
@@ -70,7 +73,8 @@ export default function FlashCard({
 
   const { transcript, isListening, feedback, mistakeCount, toggleMicrophone, isActive } = useSpeechRecognition(
     sentence?.sentence || '',
-    handleMatch
+    handleMatch,
+    isSpeaking
   );
 
   // Auto-save on 2 mistakes (only once per phrase)
@@ -88,22 +92,66 @@ export default function FlashCard({
     setIsExiting(false);
   }, [sentence]);
 
+  // Auto-speak sentence when it changes
+  useEffect(() => {
+    if (sentence && 'speechSynthesis' in window) {
+      // Small delay to ensure smooth transition
+      const timer = setTimeout(() => {
+        // Interromper qualquer TTS anterior
+        window.speechSynthesis.cancel();
+        setIsSpeaking(true);
+        const utterance = new SpeechSynthesisUtterance(sentence.sentence);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.9;
+        utterance.onend = () => {
+          setIsSpeaking(false);
+        };
+        utterance.onerror = () => {
+          setIsSpeaking(false);
+        };
+        window.speechSynthesis.speak(utterance);
+      }, 300);
+      return () => {
+        clearTimeout(timer);
+        window.speechSynthesis.cancel();
+      };
+    }
+  }, [sentence]);
+
   if (!sentence) return null;
 
   const handleSpeak = () => {
     if ('speechSynthesis' in window) {
+      // Interromper qualquer TTS anterior
+      window.speechSynthesis.cancel();
+      setIsSpeaking(true);
       const utterance = new SpeechSynthesisUtterance(sentence.sentence);
       utterance.lang = 'en-US';
       utterance.rate = 0.9;
+      utterance.onend = () => {
+        setIsSpeaking(false);
+      };
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+      };
       window.speechSynthesis.speak(utterance);
     }
   };
 
   const handleWordClick = (word: string) => {
     if ('speechSynthesis' in window) {
+      // Interromper qualquer TTS anterior
+      window.speechSynthesis.cancel();
+      setIsSpeaking(true);
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = 'en-US';
       utterance.rate = 0.9;
+      utterance.onend = () => {
+        setIsSpeaking(false);
+      };
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+      };
       window.speechSynthesis.speak(utterance);
     }
   };
@@ -156,12 +204,12 @@ export default function FlashCard({
         <div className="flex justify-between items-center mb-8 md:mb-8">
           <div className="flex items-center gap-2">
             <div className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors ${
-              isListening && isActive
+              isListening && isActive && !isSpeaking
                 ? 'bg-green-50 text-green-600 border border-green-100 animate-pulse' 
                 : 'bg-slate-50 text-slate-400 border border-slate-100'
             }`}>
-              {isListening && isActive ? <Mic size={14} className="md:w-4 md:h-4" /> : <MicOff size={14} className="md:w-4 md:h-4" />}
-              <span>{isListening && isActive ? 'Listening...' : 'Mic Off'}</span>
+              {isListening && isActive && !isSpeaking ? <Mic size={14} className="md:w-4 md:h-4" /> : <MicOff size={14} className="md:w-4 md:h-4" />}
+              <span>{isListening && isActive && !isSpeaking ? 'Listening...' : 'Mic Off'}</span>
             </div>
           </div>
 
@@ -246,6 +294,14 @@ export default function FlashCard({
           >
             <Save size={16} className="md:w-[18px] md:h-[18px]" />
             {wantsToSave ? 'Saved (Click to Undo)' : 'Save for Review'}
+          </button>
+
+          <button
+            onClick={onSkip}
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-5 md:px-6 py-2.5 md:py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-all font-medium shadow-sm text-sm md:text-base hover:shadow-md hover:-translate-y-0.5"
+          >
+            <SkipForward size={16} className="md:w-[18px] md:h-[18px]" />
+            Skip
           </button>
         </div>
 
